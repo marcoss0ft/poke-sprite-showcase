@@ -47,6 +47,13 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        pokemon: {
+          red: "hsl(var(--pokemon-red))",
+          blue: "hsl(var(--pokemon-blue))",
+          yellow: "hsl(var(--pokemon-yellow))",
+          green: "hsl(var(--pokemon-green))",
+          purple: "hsl(var(--pokemon-purple))",
+        },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
@@ -57,6 +64,17 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+      },
+      backgroundImage: {
+        'gradient-pokeball': 'var(--gradient-pokeball)',
+        'gradient-electric': 'var(--gradient-electric)',
+        'gradient-hero': 'var(--gradient-hero)',
+        'gradient-card': 'var(--gradient-card)',
+      },
+      boxShadow: {
+        'pokemon': 'var(--shadow-pokemon)',
+        'card': 'var(--shadow-card)',
+        'glow': 'var(--shadow-glow)',
       },
       borderRadius: {
         lg: "var(--radius)",

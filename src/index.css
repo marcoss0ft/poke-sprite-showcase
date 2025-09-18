@@ -8,7 +8,7 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
+    --background: 210 40% 98%;
     --foreground: 222.2 84% 4.9%;
 
     --card: 0 0% 100%;
@@ -17,26 +17,46 @@ All colors MUST be HSL.
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 222.2 47.4% 11.2%;
+    --primary: 0 72% 51%;
     --primary-foreground: 210 40% 98%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 217 91% 60%;
+    --secondary-foreground: 210 40% 98%;
 
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 45 93% 47%;
+    --accent-foreground: 222.2 84% 4.9%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --ring: 0 72% 51%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
+
+    /* Pokémon specific design tokens */
+    --pokemon-red: 0 72% 51%;
+    --pokemon-blue: 217 91% 60%;
+    --pokemon-yellow: 45 93% 47%;
+    --pokemon-green: 142 76% 36%;
+    --pokemon-purple: 263 70% 50%;
+    
+    /* Gradients */
+    --gradient-pokeball: linear-gradient(135deg, hsl(var(--pokemon-red)), hsl(var(--pokemon-blue)));
+    --gradient-electric: linear-gradient(135deg, hsl(var(--pokemon-yellow)), hsl(45 100% 60%));
+    --gradient-hero: linear-gradient(135deg, hsl(var(--pokemon-red)) 0%, hsl(var(--pokemon-blue)) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(0 0% 100% / 0.8), hsl(0 0% 100% / 0.4));
+    
+    /* Shadows */
+    --shadow-pokemon: 0 10px 25px -5px hsl(var(--pokemon-red) / 0.3);
+    --shadow-card: 0 4px 12px -2px hsl(222.2 84% 4.9% / 0.1);
+    --shadow-glow: 0 0 20px hsl(var(--pokemon-blue) / 0.4);
+
+    --radius: 0.75rem;
 
     --sidebar-background: 0 0% 98%;
 
