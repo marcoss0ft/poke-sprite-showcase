@@ -18,6 +18,12 @@ export interface Pokemon {
   }>;
   height: number;
   weight: number;
+  stats: Array<{
+    base_stat: number;
+    stat: {
+      name: string;
+    };
+  }>;
 }
 
 const fetchPokemon = async (id: number): Promise<Pokemon> => {

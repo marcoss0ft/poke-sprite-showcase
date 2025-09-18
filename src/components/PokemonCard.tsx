@@ -30,7 +30,7 @@ const typeColors: Record<string, string> = {
 
 export const PokemonCard = ({ pokemon, onClick }: PokemonCardProps) => {
   const mainType = pokemon.types[0]?.type.name || 'normal';
-  const spriteUrl = pokemon.sprites.other['official-artwork'].front_default || pokemon.sprites.front_default;
+  const spriteUrl = pokemon.sprites.front_default;
 
   return (
     <Card className="group relative overflow-hidden bg-gradient-card backdrop-blur-sm border-0 shadow-card hover:shadow-pokemon transition-all duration-300 hover:scale-105 cursor-pointer" onClick={onClick}>
@@ -48,7 +48,7 @@ export const PokemonCard = ({ pokemon, onClick }: PokemonCardProps) => {
             <img
               src={spriteUrl}
               alt={pokemon.name}
-              className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-110"
+              className="w-full h-full object-contain transition-all duration-300 group-hover:scale-110 group-hover:animate-bounce"
               loading="lazy"
             />
           </div>

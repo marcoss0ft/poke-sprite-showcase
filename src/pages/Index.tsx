@@ -129,7 +129,7 @@ const Index = () => {
                   
                   <div className="w-48 h-48 mx-auto mb-6">
                     <img
-                      src={selectedPokemon.sprites.other['official-artwork'].front_default || selectedPokemon.sprites.front_default}
+                      src={selectedPokemon.sprites.front_default}
                       alt={selectedPokemon.name}
                       className="w-full h-full object-contain"
                     />
@@ -151,7 +151,7 @@ const Index = () => {
                     ))}
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-6 text-card-foreground">
+                  <div className="grid grid-cols-2 gap-6 text-card-foreground mb-6">
                     <div className="text-center">
                       <div className="text-2xl font-bold">{(selectedPokemon.height / 10).toFixed(1)}m</div>
                       <div className="text-muted-foreground">Altura</div>
@@ -160,6 +160,26 @@ const Index = () => {
                       <div className="text-2xl font-bold">{(selectedPokemon.weight / 10).toFixed(1)}kg</div>
                       <div className="text-muted-foreground">Peso</div>
                     </div>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <h3 className="text-lg font-semibold text-card-foreground">Stats</h3>
+                    {selectedPokemon.stats.map((stat) => (
+                      <div key={stat.stat.name} className="flex items-center justify-between">
+                        <span className="text-muted-foreground capitalize">
+                          {stat.stat.name.replace('-', ' ')}
+                        </span>
+                        <div className="flex items-center gap-2">
+                          <div className="w-24 bg-muted rounded-full h-2">
+                            <div 
+                              className="bg-primary h-2 rounded-full transition-all duration-500"
+                              style={{ width: `${Math.min((stat.base_stat / 150) * 100, 100)}%` }}
+                            />
+                          </div>
+                          <span className="text-sm font-medium w-8 text-right">{stat.base_stat}</span>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
