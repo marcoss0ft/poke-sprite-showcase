@@ -2,12 +2,16 @@ import { useState, useEffect } from 'react';
 import { useSearchPokemon, Pokemon } from '@/hooks/usePokemon';
 import { PokemonCard } from '@/components/PokemonCard';
 import { PokemonSearch } from '@/components/PokemonSearch';
-import { Target } from 'lucide-react';
+import { Target, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 
 const Index = () => {
   const [capturedPokemon, setCapturedPokemon] = useState<Pokemon[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedPokemon, setSelectedPokemon] = useState<Pokemon | null>(null);
   const { toast } = useToast();
 
   const { 
@@ -87,7 +91,11 @@ const Index = () => {
         {capturedPokemon.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
             {capturedPokemon.map((pokemon) => (
-              <PokemonCard key={pokemon.id} pokemon={pokemon} />
+              <PokemonCard 
+                key={pokemon.id} 
+                pokemon={pokemon} 
+                onClick={() => setSelectedPokemon(pokemon)}
+              />
             ))}
           </div>
         ) : (
@@ -95,6 +103,67 @@ const Index = () => {
             <p className="text-white/80 text-lg">
               Sua coleção está vazia. Use a barra de pesquisa para capturar seus primeiros Pokémon!
             </p>
+          </div>
+        )}
+
+        {/* Pokemon Detail Modal */}
+        {selectedPokemon && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" onClick={() => setSelectedPokemon(null)}>
+            <Card className="max-w-md w-full bg-gradient-card backdrop-blur-sm border-0 shadow-pokemon" onClick={(e) => e.stopPropagation()}>
+              <div className="relative p-6">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute top-4 right-4 text-muted-foreground hover:text-foreground"
+                  onClick={() => setSelectedPokemon(null)}
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+                
+                <div className="text-center">
+                  <div className="mb-4">
+                    <span className="text-lg font-mono text-muted-foreground">
+                      #{selectedPokemon.id.toString().padStart(3, '0')}
+                    </span>
+                  </div>
+                  
+                  <div className="w-48 h-48 mx-auto mb-6">
+                    <img
+                      src={selectedPokemon.sprites.other['official-artwork'].front_default || selectedPokemon.sprites.front_default}
+                      alt={selectedPokemon.name}
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
+                  
+                  <h2 className="text-3xl font-bold capitalize mb-4 text-card-foreground">
+                    {selectedPokemon.name}
+                  </h2>
+                  
+                  <div className="flex flex-wrap gap-2 justify-center mb-6">
+                    {selectedPokemon.types.map((type) => (
+                      <Badge
+                        key={type.type.name}
+                        variant="secondary"
+                        className="bg-pokemon-red text-white border-0 capitalize px-3 py-1"
+                      >
+                        {type.type.name}
+                      </Badge>
+                    ))}
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-6 text-card-foreground">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold">{(selectedPokemon.height / 10).toFixed(1)}m</div>
+                      <div className="text-muted-foreground">Altura</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold">{(selectedPokemon.weight / 10).toFixed(1)}kg</div>
+                      <div className="text-muted-foreground">Peso</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Card>
           </div>
         )}
       </div>

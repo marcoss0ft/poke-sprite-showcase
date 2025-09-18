@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 
 interface PokemonCardProps {
   pokemon: Pokemon;
+  onClick?: () => void;
 }
 
 const typeColors: Record<string, string> = {
@@ -27,12 +28,12 @@ const typeColors: Record<string, string> = {
   fairy: 'bg-pink-300',
 };
 
-export const PokemonCard = ({ pokemon }: PokemonCardProps) => {
+export const PokemonCard = ({ pokemon, onClick }: PokemonCardProps) => {
   const mainType = pokemon.types[0]?.type.name || 'normal';
   const spriteUrl = pokemon.sprites.other['official-artwork'].front_default || pokemon.sprites.front_default;
 
   return (
-    <Card className="group relative overflow-hidden bg-gradient-card backdrop-blur-sm border-0 shadow-card hover:shadow-pokemon transition-all duration-300 hover:scale-105 cursor-pointer">
+    <Card className="group relative overflow-hidden bg-gradient-card backdrop-blur-sm border-0 shadow-card hover:shadow-pokemon transition-all duration-300 hover:scale-105 cursor-pointer" onClick={onClick}>
       <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
       
       <div className="relative p-6 text-center">
