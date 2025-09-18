@@ -4,18 +4,18 @@ import { Button } from '@/components/ui/button';
 import { Search, X } from 'lucide-react';
 
 interface PokemonSearchProps {
-  onSearch: (searchTerm: string) => void;
+  onCapture: (searchTerm: string) => void;
   onClear: () => void;
   isSearching?: boolean;
 }
 
-export const PokemonSearch = ({ onSearch, onClear, isSearching }: PokemonSearchProps) => {
+export const PokemonSearch = ({ onCapture, onClear, isSearching }: PokemonSearchProps) => {
   const [searchTerm, setSearchTerm] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchTerm.trim()) {
-      onSearch(searchTerm.trim());
+      onCapture(searchTerm.trim());
     }
   };
 
@@ -29,7 +29,7 @@ export const PokemonSearch = ({ onSearch, onClear, isSearching }: PokemonSearchP
       <div className="relative flex-1">
         <Input
           type="text"
-          placeholder="Buscar Pokémon por nome ou número..."
+          placeholder="Digite o nome do Pokémon para capturar..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="pr-10"
@@ -47,7 +47,7 @@ export const PokemonSearch = ({ onSearch, onClear, isSearching }: PokemonSearchP
         )}
       </div>
       <Button type="submit" disabled={!searchTerm.trim() || isSearching}>
-        <Search className="h-4 w-4" />
+        Capturar
       </Button>
     </form>
   );

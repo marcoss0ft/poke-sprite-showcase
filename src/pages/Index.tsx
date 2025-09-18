@@ -1,21 +1,14 @@
 import { useState, useEffect } from 'react';
-import { usePokemonList, useSearchPokemon } from '@/hooks/usePokemon';
+import { useSearchPokemon, Pokemon } from '@/hooks/usePokemon';
 import { PokemonCard } from '@/components/PokemonCard';
 import { PokemonSearch } from '@/components/PokemonSearch';
-import { Button } from '@/components/ui/button';
-import { Loader2, Target } from 'lucide-react';
+import { Target } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 const Index = () => {
+  const [capturedPokemon, setCapturedPokemon] = useState<Pokemon[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [showAll, setShowAll] = useState(true);
   const { toast } = useToast();
-
-  const { 
-    data: pokemonList, 
-    isLoading: isLoadingList, 
-    error: listError 
-  } = usePokemonList(151, 0);
 
   const { 
     data: searchResult, 
@@ -23,29 +16,46 @@ const Index = () => {
     error: searchError 
   } = useSearchPokemon(searchTerm);
 
-  const handleSearch = (term: string) => {
+  const handleCapture = (term: string) => {
     setSearchTerm(term);
-    setShowAll(false);
   };
 
-  const handleClearSearch = () => {
+  const handleClear = () => {
     setSearchTerm('');
-    setShowAll(true);
   };
 
-  const pokemonToShow = showAll ? pokemonList : (searchResult ? [searchResult] : []);
-  const hasError = listError || searchError;
-
-  // Handle errors with useEffect to prevent infinite re-renders
+  // Add pokemon to captured list when search succeeds
   useEffect(() => {
-    if (hasError) {
+    if (searchResult && searchTerm) {
+      const alreadyCaptured = capturedPokemon.some(p => p.id === searchResult.id);
+      if (!alreadyCaptured) {
+        setCapturedPokemon(prev => [...prev, searchResult]);
+        toast({
+          title: "Pokémon Capturado!",
+          description: `${searchResult.name} foi adicionado à sua coleção!`,
+        });
+      } else {
+        toast({
+          title: "Pokémon já capturado",
+          description: `${searchResult.name} já está na sua coleção.`,
+          variant: "destructive",
+        });
+      }
+      setSearchTerm(''); // Clear search after capture
+    }
+  }, [searchResult, searchTerm, capturedPokemon, toast]);
+
+  // Handle search errors
+  useEffect(() => {
+    if (searchError && searchTerm) {
       toast({
         title: "Erro",
-        description: "Não foi possível carregar os Pokémon. Tente novamente.",
+        description: "Pokémon não encontrado. Tente outro nome ou número.",
         variant: "destructive",
       });
+      setSearchTerm('');
     }
-  }, [hasError, toast]);
+  }, [searchError, searchTerm, toast]);
 
   return (
     <div className="min-h-screen bg-gradient-hero">
@@ -61,61 +71,29 @@ const Index = () => {
             </h1>
           </div>
           <p className="text-xl text-white/90 mb-8 max-w-2xl mx-auto">
-            Descubra e explore todos os Pokémon da região de Kanto com sprites oficiais da PokéAPI
+            Capture Pokémon buscando por nome ou número da PokéAPI
           </p>
           
           <div className="flex justify-center mb-6">
             <PokemonSearch 
-              onSearch={handleSearch}
-              onClear={handleClearSearch}
+              onCapture={handleCapture}
+              onClear={handleClear}
               isSearching={isSearching}
             />
           </div>
-
-          {!showAll && (
-            <Button
-              onClick={handleClearSearch}
-              variant="secondary"
-              className="mb-4"
-            >
-              Mostrar Todos os Pokémon
-            </Button>
-          )}
         </header>
 
-        {/* Loading State */}
-        {(isLoadingList || isSearching) && (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-white" />
-            <span className="ml-2 text-white">
-              {isSearching ? 'Procurando...' : 'Carregando Pokémon...'}
-            </span>
-          </div>
-        )}
-
-        {/* Error State */}
-        {searchError && !isSearching && (
-          <div className="text-center py-12">
-            <p className="text-white/80 text-lg">
-              Pokémon não encontrado. Tente outro nome ou número.
-            </p>
-          </div>
-        )}
-
         {/* Pokemon Grid */}
-        {pokemonToShow && pokemonToShow.length > 0 && (
+        {capturedPokemon.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-            {pokemonToShow.map((pokemon) => (
+            {capturedPokemon.map((pokemon) => (
               <PokemonCard key={pokemon.id} pokemon={pokemon} />
             ))}
           </div>
-        )}
-
-        {/* Empty State */}
-        {!isLoadingList && !isSearching && !pokemonToShow?.length && !hasError && (
+        ) : (
           <div className="text-center py-12">
             <p className="text-white/80 text-lg">
-              Nenhum Pokémon encontrado.
+              Sua coleção está vazia. Use a barra de pesquisa para capturar seus primeiros Pokémon!
             </p>
           </div>
         )}
