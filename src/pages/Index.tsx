@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { usePokemonList, useSearchPokemon } from '@/hooks/usePokemon';
 import { PokemonCard } from '@/components/PokemonCard';
 import { PokemonSearch } from '@/components/PokemonSearch';
@@ -36,13 +36,16 @@ const Index = () => {
   const pokemonToShow = showAll ? pokemonList : (searchResult ? [searchResult] : []);
   const hasError = listError || searchError;
 
-  if (hasError) {
-    toast({
-      title: "Erro",
-      description: "Não foi possível carregar os Pokémon. Tente novamente.",
-      variant: "destructive",
-    });
-  }
+  // Handle errors with useEffect to prevent infinite re-renders
+  useEffect(() => {
+    if (hasError) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível carregar os Pokémon. Tente novamente.",
+        variant: "destructive",
+      });
+    }
+  }, [hasError, toast]);
 
   return (
     <div className="min-h-screen bg-gradient-hero">
