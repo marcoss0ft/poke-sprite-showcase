@@ -154,6 +154,11 @@ const server = app.listen(PORT, () => {
   console.log(`API listening on port ${PORT}`);
 });
 
+// Ensure the HTTP server keeps the Node.js event loop alive.
+if (typeof server.ref === 'function') {
+  server.ref();
+}
+
 server.on('close', () => {
   console.log('HTTP server closed.');
 });
