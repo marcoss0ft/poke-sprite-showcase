@@ -173,7 +173,16 @@ process.on('SIGINT', shutdown);
 process.on('SIGTERM', shutdown);
 
 process.on('beforeExit', (code) => {
+  const handles = process._getActiveHandles?.() ?? [];
   console.log('Process beforeExit event with code', code);
+  if (handles.length === 0) {
+    console.log('No active handles remain.');
+  } else {
+    console.log('Active handles:');
+    for (const handle of handles) {
+      console.log('-', handle.constructor?.name ?? typeof handle);
+    }
+  }
 });
 
 process.on('exit', (code) => {
