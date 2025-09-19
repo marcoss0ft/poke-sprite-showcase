@@ -2,12 +2,23 @@ import { useEffect, useMemo, useState } from 'react';
 import { useSearchPokemon, Pokemon } from '@/hooks/usePokemon';
 import { PokemonCard } from '@/components/PokemonCard';
 import { PokemonSearch } from '@/components/PokemonSearch';
-import { Target, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { Card, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { useCapturedPokemon, useCapturePokemon } from '@/hooks/useCapturedPokemon';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { useCapturedPokemon, useCapturePokemon, useReleasePokemon } from '@/hooks/useCapturedPokemon';
 
 const Index = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -27,6 +38,7 @@ const Index = () => {
   } = useCapturedPokemon();
 
   const { mutateAsync: capturePokemon, isPending: isCapturing } = useCapturePokemon();
+  const { mutateAsync: releasePokemon, isPending: isReleasing } = useReleasePokemon();
 
   useEffect(() => {
     if (!searchResult || !searchTerm) {
@@ -99,6 +111,28 @@ const Index = () => {
     setSearchTerm('');
   };
 
+  const confirmRelease = async () => {
+    if (!selectedPokemon) {
+      return;
+    }
+
+    try {
+      await releasePokemon(selectedPokemon.id);
+      toast({
+        title: 'Pokémon liberado',
+        description: `${selectedPokemon.name} voltou para a natureza.`,
+      });
+      setSelectedPokemon(null);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Falha ao liberar Pokémon.';
+      toast({
+        title: 'Erro',
+        description: message,
+        variant: 'destructive',
+      });
+    }
+  };
+
   const isBusy = useMemo(() => isSearching || isCapturing, [isCapturing, isSearching]);
 
   return (
@@ -106,12 +140,12 @@ const Index = () => {
       <div className="container mx-auto px-4 py-8">
         <header className="text-center mb-12">
           <div className="flex items-center justify-center gap-3 mb-4">
-            <div className="w-12 h-12 bg-gradient-pokeball rounded-full flex items-center justify-center shadow-glow">
-              <Target className="w-6 h-6 text-white" />
-            </div>
-            <h1 className="text-4xl md:text-6xl font-bold text-white drop-shadow-lg">
-              Pokédex
-            </h1>
+            <img
+              src="/img/pokeball.png"
+              alt="Pokébola"
+              className="w-14 h-14 drop-shadow-lg"
+            />
+            <h1 className="text-4xl md:text-6xl font-bold text-white drop-shadow-lg">Pokédex</h1>
           </div>
           <p className="text-xl text-white/90 mb-8 max-w-2xl mx-auto">
             Capture Pokémon buscando por nome ou número da PokéAPI
@@ -152,10 +186,10 @@ const Index = () => {
             onClick={() => setSelectedPokemon(null)}
           >
             <Card
-              className="max-w-md w-full bg-gradient-card backdrop-blur-sm border-0 shadow-pokemon"
+              className="max-w-md w-full max-h-[90vh] bg-gradient-card backdrop-blur-sm border-0 shadow-pokemon flex flex-col"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="relative p-6">
+              <div className="relative p-6 flex-1 overflow-y-auto">
                 <Button
                   variant="ghost"
                   size="icon"
@@ -226,8 +260,32 @@ const Index = () => {
                       </div>
                     ))}
                   </div>
+
                 </div>
               </div>
+              <CardFooter className="justify-center border-t border-white/10 p-6">
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="default" disabled={isReleasing} className="release-button">
+                      {isReleasing ? 'Liberando...' : 'Liberar Pokémon'}
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Tem certeza que deseja liberar este Pokémon?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Essa ação remove o Pokémon da sua coleção. Você poderá capturá-lo novamente no futuro.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel disabled={isReleasing}>Cancelar</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => void confirmRelease()} disabled={isReleasing}>
+                        Confirmar
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </CardFooter>
             </Card>
           </div>
         )}
