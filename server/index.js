@@ -150,7 +150,7 @@ app.delete("/api/captured/:id", async (req, res) => {
 
 async function main() {
   try {
-    await ensureCapturedPokemonTable();
+    //await ensureCapturedPokemonTable();
 
     const server = app.listen(PORT, "0.0.0.0", () => {
       console.log(`API listening on port ${PORT}`);
