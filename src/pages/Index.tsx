@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useSearchPokemon, Pokemon } from '@/hooks/usePokemon';
 import { PokemonCard } from '@/components/PokemonCard';
 import { PokemonSearch } from '@/components/PokemonSearch';
@@ -7,18 +7,89 @@ import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { useCapturedPokemon, useCapturePokemon } from '@/hooks/useCapturedPokemon';
 
 const Index = () => {
-  const [capturedPokemon, setCapturedPokemon] = useState<Pokemon[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPokemon, setSelectedPokemon] = useState<Pokemon | null>(null);
   const { toast } = useToast();
 
-  const { 
-    data: searchResult, 
-    isLoading: isSearching, 
-    error: searchError 
+  const {
+    data: searchResult,
+    isLoading: isSearching,
+    error: searchError,
   } = useSearchPokemon(searchTerm);
+
+  const {
+    data: capturedPokemon = [],
+    isLoading: isCapturedLoading,
+    isError: capturedError,
+  } = useCapturedPokemon();
+
+  const { mutateAsync: capturePokemon, isPending: isCapturing } = useCapturePokemon();
+
+  useEffect(() => {
+    if (!searchResult || !searchTerm) {
+      return;
+    }
+
+    let isCurrent = true;
+
+    const persistCapturedPokemon = async () => {
+      try {
+        const response = await capturePokemon(searchResult);
+
+        if (!isCurrent) {
+          return;
+        }
+
+        if (response.status === 'captured') {
+          toast({
+            title: 'Pokémon Capturado!',
+            description: `${searchResult.name} foi adicionado à sua coleção!`,
+          });
+        } else {
+          toast({
+            title: 'Pokémon já capturado',
+            description: `${searchResult.name} já está na sua coleção.`,
+            variant: 'destructive',
+          });
+        }
+      } catch (error) {
+        if (!isCurrent) {
+          return;
+        }
+
+        const message = error instanceof Error ? error.message : 'Falha ao capturar Pokémon.';
+        toast({
+          title: 'Erro',
+          description: message,
+          variant: 'destructive',
+        });
+      } finally {
+        if (isCurrent) {
+          setSearchTerm('');
+        }
+      }
+    };
+
+    void persistCapturedPokemon();
+
+    return () => {
+      isCurrent = false;
+    };
+  }, [capturePokemon, searchResult, searchTerm, toast]);
+
+  useEffect(() => {
+    if (searchError && searchTerm) {
+      toast({
+        title: 'Erro',
+        description: 'Pokémon não encontrado. Tente outro nome ou número.',
+        variant: 'destructive',
+      });
+      setSearchTerm('');
+    }
+  }, [searchError, searchTerm, toast]);
 
   const handleCapture = (term: string) => {
     setSearchTerm(term);
@@ -28,43 +99,11 @@ const Index = () => {
     setSearchTerm('');
   };
 
-  // Add pokemon to captured list when search succeeds
-  useEffect(() => {
-    if (searchResult && searchTerm) {
-      const alreadyCaptured = capturedPokemon.some(p => p.id === searchResult.id);
-      if (!alreadyCaptured) {
-        setCapturedPokemon(prev => [...prev, searchResult]);
-        toast({
-          title: "Pokémon Capturado!",
-          description: `${searchResult.name} foi adicionado à sua coleção!`,
-        });
-      } else {
-        toast({
-          title: "Pokémon já capturado",
-          description: `${searchResult.name} já está na sua coleção.`,
-          variant: "destructive",
-        });
-      }
-      setSearchTerm(''); // Clear search after capture
-    }
-  }, [searchResult, searchTerm, capturedPokemon, toast]);
-
-  // Handle search errors
-  useEffect(() => {
-    if (searchError && searchTerm) {
-      toast({
-        title: "Erro",
-        description: "Pokémon não encontrado. Tente outro nome ou número.",
-        variant: "destructive",
-      });
-      setSearchTerm('');
-    }
-  }, [searchError, searchTerm, toast]);
+  const isBusy = useMemo(() => isSearching || isCapturing, [isCapturing, isSearching]);
 
   return (
     <div className="min-h-screen bg-gradient-hero">
       <div className="container mx-auto px-4 py-8">
-        {/* Header */}
         <header className="text-center mb-12">
           <div className="flex items-center justify-center gap-3 mb-4">
             <div className="w-12 h-12 bg-gradient-pokeball rounded-full flex items-center justify-center shadow-glow">
@@ -77,25 +116,26 @@ const Index = () => {
           <p className="text-xl text-white/90 mb-8 max-w-2xl mx-auto">
             Capture Pokémon buscando por nome ou número da PokéAPI
           </p>
-          
+
           <div className="flex justify-center mb-6">
-            <PokemonSearch 
-              onCapture={handleCapture}
-              onClear={handleClear}
-              isSearching={isSearching}
-            />
+            <PokemonSearch onCapture={handleCapture} onClear={handleClear} isSearching={isBusy} />
           </div>
         </header>
 
-        {/* Pokemon Grid */}
-        {capturedPokemon.length > 0 ? (
+        {isCapturedLoading ? (
+          <div className="text-center py-12">
+            <p className="text-white/80 text-lg">Carregando sua coleção...</p>
+          </div>
+        ) : capturedError ? (
+          <div className="text-center py-12">
+            <p className="text-white/80 text-lg">
+              Não foi possível carregar a coleção no momento. Tente novamente mais tarde.
+            </p>
+          </div>
+        ) : capturedPokemon.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
             {capturedPokemon.map((pokemon) => (
-              <PokemonCard 
-                key={pokemon.id} 
-                pokemon={pokemon} 
-                onClick={() => setSelectedPokemon(pokemon)}
-              />
+              <PokemonCard key={pokemon.id} pokemon={pokemon} onClick={() => setSelectedPokemon(pokemon)} />
             ))}
           </div>
         ) : (
@@ -106,10 +146,15 @@ const Index = () => {
           </div>
         )}
 
-        {/* Pokemon Detail Modal */}
         {selectedPokemon && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" onClick={() => setSelectedPokemon(null)}>
-            <Card className="max-w-md w-full bg-gradient-card backdrop-blur-sm border-0 shadow-pokemon" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
+            onClick={() => setSelectedPokemon(null)}
+          >
+            <Card
+              className="max-w-md w-full bg-gradient-card backdrop-blur-sm border-0 shadow-pokemon"
+              onClick={(e) => e.stopPropagation()}
+            >
               <div className="relative p-6">
                 <Button
                   variant="ghost"
@@ -119,14 +164,14 @@ const Index = () => {
                 >
                   <X className="w-4 h-4" />
                 </Button>
-                
+
                 <div className="text-center">
                   <div className="mb-4">
                     <span className="text-lg font-mono text-muted-foreground">
                       #{selectedPokemon.id.toString().padStart(3, '0')}
                     </span>
                   </div>
-                  
+
                   <div className="w-48 h-48 mx-auto mb-6">
                     <img
                       src={selectedPokemon.sprites.front_default}
@@ -134,11 +179,11 @@ const Index = () => {
                       className="w-full h-full object-contain"
                     />
                   </div>
-                  
+
                   <h2 className="text-3xl font-bold capitalize mb-4 text-card-foreground">
                     {selectedPokemon.name}
                   </h2>
-                  
+
                   <div className="flex flex-wrap gap-2 justify-center mb-6">
                     {selectedPokemon.types.map((type) => (
                       <Badge
@@ -150,7 +195,7 @@ const Index = () => {
                       </Badge>
                     ))}
                   </div>
-                  
+
                   <div className="grid grid-cols-2 gap-6 text-card-foreground mb-6">
                     <div className="text-center">
                       <div className="text-2xl font-bold">{(selectedPokemon.height / 10).toFixed(1)}m</div>
@@ -161,7 +206,7 @@ const Index = () => {
                       <div className="text-muted-foreground">Peso</div>
                     </div>
                   </div>
-                  
+
                   <div className="space-y-3">
                     <h3 className="text-lg font-semibold text-card-foreground">Stats</h3>
                     {selectedPokemon.stats.map((stat) => (
@@ -171,7 +216,7 @@ const Index = () => {
                         </span>
                         <div className="flex items-center gap-2">
                           <div className="w-24 bg-muted rounded-full h-2">
-                            <div 
+                            <div
                               className="bg-primary h-2 rounded-full transition-all duration-500"
                               style={{ width: `${Math.min((stat.base_stat / 150) * 100, 100)}%` }}
                             />

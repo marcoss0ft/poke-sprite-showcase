@@ -60,6 +60,11 @@ This project is built with:
 - shadcn-ui
 - Tailwind CSS
 
+### Backend API
+
+- Express.js
+- PostgreSQL (via `pg`)
+
 ## How can I deploy this project?
 
 Simply open [Lovable](https://lovable.dev/projects/114c9d3a-63b1-4497-8836-8dcf656fa148) and click on Share -> Publish.
@@ -71,3 +76,42 @@ Yes, you can!
 To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
 
 Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+
+## Conectando ao PostgreSQL externo
+
+1. Copie o arquivo `.env.example` para `.env` e ajuste as variáveis de acordo com o seu ambiente:
+
+   ```sh
+   cp .env.example .env
+   ```
+
+   - Atualize `DATABASE_URL` com o IP ou DNS público da instância (por exemplo `postgresql://admin:cloudq@192.169.0.189/meubanco`).
+   - Caso altere a porta da API, lembre-se de refletir o valor em `VITE_API_URL`.
+
+2. Instale as dependências (se ainda não instaladas):
+
+   ```sh
+   npm install
+   ```
+
+3. Em um terminal, suba o backend Express que faz a ponte com o Postgres:
+
+   ```sh
+   npm run server
+   ```
+
+   A API inicializa automaticamente a tabela `captured_pokemon` se ela ainda não existir.
+
+4. Em outro terminal, rode a aplicação web normalmente:
+
+   ```sh
+   npm run dev
+   ```
+
+5. Acesse `http://localhost:5173`, capture um Pokémon e o backend irá persistir o payload completo retornado pela PokéAPI no banco externo.
+
+### Troubleshooting
+
+- **Erro de conexão com o banco**: confirme que o host/IP está acessível da máquina local e que a porta padrão (`5432`) está liberada.
+- **TLS/SSL obrigatório**: se a instância exigir SSL, adapte a `DATABASE_URL` para incluir `?sslmode=require`.
+- **Limpar capturas**: use `DELETE /api/captured/:id` para remover um registro específico.
