@@ -1,0 +1,12 @@
+# Runtime dependencies for the Node/Express API
+express@5.1.0
+cors@2.8.5
+pg@8.16.3
+dotenv@17.2.2
+zod@3.25.76
+
+# Build tooling (React frontend & API)
+@tanstack/react-query@5.83.0
+react@18.3.1
+react-dom@18.3.1
+vite@5.4.19
