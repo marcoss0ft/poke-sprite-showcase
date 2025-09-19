@@ -19,6 +19,11 @@ const pool = new Pool({
   connectionString: DATABASE_URL,
 });
 
+// Prevent the process from crashing when the database connection resets.
+pool.on('error', (error) => {
+  console.error('Unexpected PostgreSQL client error', error);
+});
+
 const pokemonSchema = z
   .object({
     id: z.number(),
