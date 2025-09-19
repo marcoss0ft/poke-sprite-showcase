@@ -12,10 +12,15 @@ type ReleaseResponse = {
   pokemon: Pokemon;
 };
 
-const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:4000';
+const buildApiUrl = (path: string) => {
+  const base = (import.meta.env.VITE_API_URL ?? 'http://localhost:4000/api').replace(/\/+$/, '');
+  const normalisedPath = path.startsWith('/') ? path : `/${path}`;
+
+  return `${base}${normalisedPath}`;
+};
 
 const fetchCapturedPokemon = async (): Promise<Pokemon[]> => {
-  const response = await fetch(`${API_BASE_URL}/api/captured`);
+  const response = await fetch(buildApiUrl('/captured'));
 
   if (!response.ok) {
     throw new Error('Falha ao buscar Pokémon capturados.');
@@ -25,7 +30,7 @@ const fetchCapturedPokemon = async (): Promise<Pokemon[]> => {
 };
 
 const capturePokemonOnServer = async (pokemon: Pokemon): Promise<CaptureResponse> => {
-  const response = await fetch(`${API_BASE_URL}/api/captured`, {
+  const response = await fetch(buildApiUrl('/captured'), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -42,7 +47,7 @@ const capturePokemonOnServer = async (pokemon: Pokemon): Promise<CaptureResponse
 };
 
 const releasePokemonOnServer = async (pokemonId: number): Promise<ReleaseResponse> => {
-  const response = await fetch(`${API_BASE_URL}/api/captured/${pokemonId}`, {
+  const response = await fetch(buildApiUrl(`/captured/${pokemonId}`), {
     method: 'DELETE',
   });
 
