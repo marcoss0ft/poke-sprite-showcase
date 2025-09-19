@@ -154,6 +154,10 @@ const server = app.listen(PORT, () => {
   console.log(`API listening on port ${PORT}`);
 });
 
+server.on('close', () => {
+  console.log('HTTP server closed.');
+});
+
 async function shutdown() {
   server.close();
   try {
@@ -167,3 +171,11 @@ async function shutdown() {
 
 process.on('SIGINT', shutdown);
 process.on('SIGTERM', shutdown);
+
+process.on('beforeExit', (code) => {
+  console.log('Process beforeExit event with code', code);
+});
+
+process.on('exit', (code) => {
+  console.log('Process exit event with code', code);
+});
