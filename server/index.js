@@ -1,8 +1,8 @@
-import express from "express";
-import cors from "cors";
-import dotenv from "dotenv";
-import pkg from "pg";
-import { z } from "zod";
+import express from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import pkg from 'pg';
+import { z } from 'zod';
 
 dotenv.config();
 
@@ -10,25 +10,15 @@ const PORT = process.env.PORT ?? 4000;
 const DATABASE_URL = process.env.DATABASE_URL;
 
 if (!DATABASE_URL) {
-  console.error("❌ DATABASE_URL environment variable is not set.");
+  console.error('DATABASE_URL environment variable is not set.');
   process.exit(1);
 }
 
 const { Pool } = pkg;
 const pool = new Pool({ connectionString: DATABASE_URL });
 
-// Logs para entender o comportamento do pool
-pool.on("connect", () => {
-  console.log("✅ Novo cliente conectado ao Postgres");
-});
-pool.on("acquire", () => {
-  console.log("🔗 Cliente adquirido do pool");
-});
-pool.on("remove", () => {
-  console.log("❌ Cliente removido do pool");
-});
-pool.on("error", (err) => {
-  console.error("🔥 Erro inesperado no pool do Postgres", err);
+pool.on('error', (error) => {
+  console.error('Unexpected PostgreSQL client error', error);
 });
 
 const pokemonSchema = z
@@ -52,44 +42,108 @@ async function ensureCapturedPokemonTable() {
 
 const app = express();
 app.use(cors());
-app.use(express.json({ limit: "1mb" }));
+app.use(express.json({ limit: '1mb' }));
 
-// ==================== Rotas ====================
-app.get("/health", (req, res) => {
-  res.json({ status: "ok" });
+// Healthcheck
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok' });
 });
 
-// (coloque aqui as outras rotas /api/captured, etc. se já tiver)
+// GET capturados
+app.get('/api/captured', async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT data, captured_at FROM captured_pokemon ORDER BY captured_at DESC'
+    );
+    res.json(
+      result.rows.map((row) => ({
+        ...row.data,
+        captured_at: row.captured_at,
+      }))
+    );
+  } catch (error) {
+    console.error('Failed to fetch captured Pokémon', error);
+    res.status(500).json({ status: 'error', message: 'Falha ao buscar Pokémon capturados.' });
+  }
+});
 
-// ==================== Inicialização ====================
+// POST capturado
+app.post('/api/captured', async (req, res) => {
+  try {
+    const pokemon = pokemonSchema.parse(req.body);
+
+    try {
+      await pool.query(
+        'INSERT INTO captured_pokemon (pokemon_id, data) VALUES ($1, $2)',
+        [pokemon.id, pokemon]
+      );
+      res.status(201).json({ status: 'captured', pokemon });
+    } catch (error) {
+      if (error.code === '23505') {
+        const existing = await pool.query(
+          'SELECT data, captured_at FROM captured_pokemon WHERE pokemon_id = $1',
+          [pokemon.id]
+        );
+        return res.status(200).json({
+          status: 'already_captured',
+          pokemon: existing.rows[0].data,
+          captured_at: existing.rows[0].captured_at,
+        });
+      }
+      throw error;
+    }
+  } catch (error) {
+    console.error('Failed to persist captured Pokémon', error);
+    res.status(500).json({ status: 'error', message: 'Falha ao capturar Pokémon.' });
+  }
+});
+
+// DELETE capturado
+app.delete('/api/captured/:id', async (req, res) => {
+  const pokemonId = Number.parseInt(req.params.id, 10);
+
+  if (Number.isNaN(pokemonId)) {
+    return res.status(400).json({ status: 'error', message: 'ID de Pokémon inválido.' });
+  }
+
+  try {
+    const result = await pool.query(
+      'DELETE FROM captured_pokemon WHERE pokemon_id = $1 RETURNING data',
+      [pokemonId]
+    );
+    if (result.rowCount === 0) {
+      return res.status(404).json({ status: 'error', message: 'Pokémon não encontrado.' });
+    }
+    res.json({ status: 'released', pokemon: result.rows[0].data });
+  } catch (error) {
+    console.error('Failed to release Pokémon', error);
+    res.status(500).json({ status: 'error', message: 'Falha ao liberar Pokémon.' });
+  }
+});
+
+// Inicia servidor
 async function main() {
   try {
     await ensureCapturedPokemonTable();
 
-    const server = app.listen(PORT, "0.0.0.0", () => {
+    const server = app.listen(PORT, '0.0.0.0', () => {
       console.log(`🚀 API ouvindo na porta ${PORT}`);
     });
 
-    // Forçar um handle no loop para confirmar se o processo fecha sozinho
-    setInterval(() => {
-      console.log("⏳ Servidor ainda ativo...");
-    }, 5000);
-
-    process.on("SIGINT", () => shutdown(server));
-    process.on("SIGTERM", () => shutdown(server));
+    process.on('SIGINT', () => shutdown(server));
+    process.on('SIGTERM', () => shutdown(server));
   } catch (error) {
-    console.error("❌ Erro ao inicializar aplicação", error);
+    console.error('Failed to initialise database', error);
+    process.exit(1);
   }
 }
 
 async function shutdown(server) {
-  console.log("⚠️ Encerrando servidor...");
   server.close();
   try {
     await pool.end();
-    console.log("✅ Pool de conexões fechado");
   } catch (err) {
-    console.error("🔥 Erro fechando pool", err);
+    console.error('Error closing PostgreSQL connection pool', err);
   } finally {
     process.exit(0);
   }
