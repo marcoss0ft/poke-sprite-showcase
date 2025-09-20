@@ -44,10 +44,13 @@ const app = express();
 app.use(cors());
 app.use(express.json({ limit: '1mb' }));
 
-// Healthcheck
-app.get('/health', (req, res) => {
+// Healthcheck (direct and via proxy prefix)
+const sendHealth = (req, res) => {
   res.json({ status: 'ok' });
-});
+};
+
+app.get('/health', sendHealth);
+app.get('/api/health', sendHealth);
 
 // GET capturados
 app.get('/api/captured', async (req, res) => {
